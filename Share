@@ -1,3 +1,6 @@
 从零开始解释神经网络的数学过程https://www.jiqizhixin.com/articles/2019-07-11
 论文Constructing Fast Network through Deconstruction of Convolution中ASL代码https://github.com/jyh2986/Active-Shift-TF
 伯克利Shift: A Zero FLOP, Zero Parameter Alternative to Spatial Convolutions 相关代码https://github.com/alvinwan/shiftresnet-cifar
+清华镜像源https://mirrors.tuna.tsinghua.edu.cn/help/pypi/
+深度学习理论与实战：提高篇http://fancyerii.github.io/2019/03/14/dl-book/
+

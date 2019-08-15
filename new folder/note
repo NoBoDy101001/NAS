@@ -1,0 +1,173 @@
+自动机器学习技术AutoML: 数据处理、特征工程、模型、优化算法等流程自动流水线化
+自动神经网络结构搜索技术NAS: 拓扑超参优化；优化目标-网络性能、搜索时间；搜索空间，搜索策略，性能评估策略；
+1.	性能评估策略：不仅取决于网络结构，还取决于训练效果（同一个网络学习参数的好坏）；计算量过大——条件松弛；更少的epochs（但不同结构的网络高效的时期不同）、数据精炼（均匀覆盖、难例提取）、迁移学习、数据样本本身的缩放。评估指标：正确率、参数数量、FLOPs、推理延时、计算强度、内存占用、功耗。多目标帕累托最优-非劣解集。减小评估代价：训练更少的次数、选择低分辨率图片、使用更少的卷积核/滤波器，代理模型？，迁移学习初值优化，one-shot
+2.	时间性能：真实时延（在机器上的运行时间）-不便——>时延预测（拆解成kernel size, stride for convolution, expansion ratio）
+3.	网络结构编码参数化，包括算子、cell连接；channel未加入
+4.	参数共享
+5.	一次训练：交替训练-网络结构和网络权重交替更新造成偏差——>One Shot，Supernet只做一次训练
+二、搜索算法（优化）：随机搜索baseline、贪婪搜索、
+1.	贪婪算法：渐进增加分支，每一步都选择最好的K个模型进行训练，对早期的错误没有修正能力
+2.	进化算法：空间内直接搜索
+3.	强化学习：序列模型action-链接下一cell，网络模型结构参数化、连续化。State：当前网络结构；action：输出下一层的算子；return：性能评估指标
+4.	贝叶斯优化：估计目标函数的分布
+
+搜索空间-搜索策略（优化方法）-目标评估
+存在问题：自动数据标签标注，训练量过大，基于梯度的方法需要参数连续化
+ 
+
+2019-7-3:
+卷积神经网络：1998 LeCun引入LeNet-5架构
+LeNet-5（1998）——AlexNet（2012）——GoogLeNet（2014）——ResNet（2015）
+像素输入是2D的。卷积核 感受野的宽度和高度 步幅 零填充
+ 
+卷积核/过滤器
+参数共享，对于同一个特征映射，下一层的filter的所有神经元共享相同的参数（以同一个模式扫描，例如垂直、水平等等，表示的是一种扫描模式）
+
+2019-7-8
+论文：Single-Path NAS: Designing Hardware-Efficient ConvNets in less than 4 Hours
+人工专家经验设计——>NAS 硬件效率问题 精度问题 任务：选择每一层的算子
+Signal-path search space大大减小搜索空间; hardware-efficient ImageNet classification
+One-shot, supernet-based, 
+Stride步长 padding填充same步长为1时每层输出大小不变，填充valid时不填充
+硬件效率评估-从基于浮点运算次数FLOPs到基于硬件运算时间功耗（因为并行计算 cell-based formulation）
+结构超参数：kernel size k；expansion ratio e；
+MBConv-NAS 选择k和e和零输出skip-op，结构组合问题变成了找激活核权重子集的问题
+
+参数共享：不仅是传统的同一特征映射下的参数共享，不同大小的卷积核也可以共享inner kernel。5*5和3*3的卷积核可以共享同一个inner kernel的参数
+编码方法：通过参数决定使用的算子类型，如何确定l函数，阈值比较，如何确定阈值，基于梯度的方法学习？在tk的学习过程中，使用sigmoid函数
+Expansion rate ？
+
+Tensorflow：定义变量张量——初始化变量——激活过程边(计算节点)——
+tf.Variable() tf.global_variables_initializer() sess.run
+
+
+2019-7-9
+1.tensorflow: 从外部传入变量用占位符tf.placeholder()，再用feed_dict={}喂参数
+np.newaxis为多位数组增加一个轴，实用将一维向量转换为n*1或1*n向量；可以用reshape替代？
+2.例会：NAS方案实现，ME对接，写书，写专利论文
+
+ 
+3.加速神经网络训练：随机梯度下降法SGD 小批量；Momentum惯性系数
+AdaGrad
+RMSProp惯性原则+对错误方向的阻力
+Adam
+
+2019-7-10
+一、视频会议：
+1.	 
+2.	钟立耿 single path的mask阶段，mask遮盖罩。Mask指的就是用阈值开关控制kernel size，以值大小来判断是否开启5*5\3*3的部分，single-path把kernel放在一条路径，结构编码变成了是否选择outer shell
+3.	双优化是难点，耦合严重arc和学习参数。One-shot先训练超网，均匀采样，神经网络搜索变成了选择子网的过程
+4.	小米论文fairNas：超网的训练提升，但是nas的结果并不理想。超网采样的过程不就等同于搜索？权重复用
+5.	从数学上找一个框架创新
+6.	Shift操作加速训练？
+7.	对mask准则加入Softmax
+8.	Attention？和softmax关系
+9.	Idea：以机器学习中集成学习的模式整合神经网络。找一个最好的未必是一个好思路-属于模型融合的内容
+10.	早期的NAS方法使用嵌套式优化，从搜索空间采样出模型结构，接着从头训练其权重。双优化；联合式优化：超参数和学习参数一起优化；超网one-shot，超网络训练的图节点权重是耦合的，复用权重是否适用于任意子结构尚不清楚。
+11.	待解决问题，mobilenet中的depthconv具体实现原理
+二、旷视论文single-path one-shot
+
+
+7/11/2019
+AutoML：learning to learn 自动化机器学习 手工设计到自动流水线
+自动数据清洗、自动特征工程、自动模型选择、自动参数调节、自动模型融合，自动模型评估
+FBNet, DARTS, ProxylessNAS, ENAS
+Single-path：superkenel统一了3x3和5x5两种卷积，把网络结构变成了single path, 
+with A as B语句：
+try：
+先执行A的__enter__传给B
+执行with-block
+finally：
+	执行__exit__内容
+2.ShiftNet：利用shift移位操作替代空间卷积操作
+Depthwise  spatial空间卷积——替代为shift操作，点卷积（通道卷积）
+
+7/12/2019
+1.	伯克利：Shift操作
+2.	ResNet：投票系统 skip-op 利于误差向浅层传播
+3.	Single-path, one-shot, shift-op, DKS, Selective kernel, DARTS, ENAS, 
+
+2019/7/16
+1.	Mindspore会议: nas；二阶；手势识别GNN
+2.	数据增强方法：PBA
+3.	超参优化方法。PBT population based training 两种常用的自动调参方式是并行搜索和序列优化。序列优化比如人工调参和贝叶斯优化，通过一次次尝试优化。有些超参数需要自适应化。PBT感觉是联合优化和嵌套优化的结合，虽然参数训练和超参调节有先后，但是交替进行，并不是设置新的超参就从头开始。思想上靠近联合调优，超参和参数一起优化
+4.	论文：PBA：population based augmentation efficient learning of augmentation policy schedules PBA中使用的增强策略（非固定）由PBT得到，
+5.	[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+2019/7/17
+1.	数据增强方法: 无监督：GAN， AutoAugmentation：通过强化学习得到合适的数据增强方法
+2.	Identification: 相当于skip操作，直接输出
+3.	PBA论文：前期对数据弱增强，让模型发散性的学习特征，后期数据强增强，专注学习不变性的特征。所以有了schedule，增强策略随着epoch变化而变化
+疑问：为什么是60个超参数；最后得到的16个policy是按epoch的schedule吗，两组60长的编码代表什么；那种群数量是多少，16也是初始化的个体数吗；
+0opt 20%，1opt 30%，2opt 50%
+探索和开发。探索explore增加随机搜索性
+
+2019/7/18
+1.	数据：reduced cifar10是怎么选取的；能不能直接调用；data_loader怎么写；数据减少严重影响结果，但为了比较
+2.	映射网络驱动器，可以连接到远程服务器地址
+
+2019/7/19
+1.	修改moxing代码: pba-master加载imagenet方法或者moxing使用pba-aug
+2.	Pycharm版本控制方法
+
+2019/7/22
+1.	Imagenet均值和标准差：    transforms.Normalize(mean = [ 0.485, 0.456, 0.406 ],
+2.	                         std = [ 0.229, 0.224, 0.225 ]),
+3.	PIL库pillow
+4.	Imagenet数据集1000个类别，
+
+2019/7/23
+1.	NAS方法发展综述：基于强化学习的NAS-RNN作为controller，生成child-network；ENAS-权重共享，提高搜索效率；cell结构；DARTS-可微分，连接强度，搜索空间变为连续空间，基于梯度的方法；NAO；商汤SNAS；one-shot；single-path；proxylessNas-MIT二值化；
+
+2019/7/24
+7-24会议纪要：
+（一）初步已识别出的可能专利
+1. 在原有enas算法基础上添加了warmup操作，warmup操作具体步骤是controller采用cosine等策略函数，逐步降低child的训练步数。最终使得NAS训练速度得到提升。
+目前已经落地cloudbu九州通、基因检测等场景。           ----遗留任务：i) warmup中的cosine策略函数能否进一步提炼，不是靠人为经验决定，而是通过学习得来; ii)完成相关的
+方案胶片以及专利检索工作。      -----责任人：王琪瑞 （暂定）
+
+2. 原始的SinglePath方法是单纯基于mobilenetv2进行搜索的，目前的方案在原有的基础上，根据人工经验替换掉了一些算子和网络层，例如SE、Hswish的算子，使得精度从74.96%提高到了76.5%以上，
+时延、模型大小基本满足需求。  ----遗留问题：完成相关的方案胶片以及专利检索工作      -----责任人：王琪瑞（暂定）
+
+3. 浙大张国川老师：基于one-shot以及模拟退火的新搜索算法，其中模拟退火是为了增加子arc搜索的随机性。搜索过程中，在cifar10上的验证集上测试精度为50%，真实性能为96.3%。
+-----遗留问题：one-shot方法较多，找一个比较类似的方案进行效果以及创新性的对比，并完成胶片。   ----责任人：姚艳丽
+
+（二）潜在的研究方向
+1. 目前的SinglePath+mobilenetv2方案中，没有考虑将activation加入到搜索中。后面将尝试将activation加入搜索中，并且考虑基于mobilenetv3的backbone去搜索。 -----遗留任务：待实现     ------责任人：叶秀敏
+2. 尝试在Singlepath +可连续变化的channel，该方法类似于剪枝的方法，具体可以通过加入l2 normal/l1 loss方式实现。    -----遗留任务：待完成        --------责任人：罗兰
+3. 尝试将Singlepath里面的block的depthwise卷积替换成shiftconv，看性能是否有提高。     -------遗留任务：待完成    ------责任人：钟立耿
+4.浙大张国川老师：基于多个player进行网络搜索的NAS算法验证集精度80%，真实性能还待测试。   -----遗留任务：完成测试及胶片撰写     -----责任人：姚艳丽
+
+2.	Moxing框架学习
+XferNas：XferNas的主要思想
+不仅仅针对当前数据集，而是学习所有历史任务网络结构与目标函数的映射关系
+将映射函数分解为通用函数和依赖任务函数两部分。对于一个未知的任务可以将通用函数作为warmstart，只用训练针对特定任务部分的函数。无论是通用函数还是任务依赖这种方法可以和任何NAS方法结合
+XferNAS分两个阶段
+第一个阶段，系统缺乏目标知识，仅仅依赖历史知识，根据历史知识中准确率最高的网络结构作为初始位置，同样有有个渐进式搜索的过程，根据映射函数按照一定的步幅进行迭代；第二阶段是在第一阶段的结果的基础上，这里选了33个网络结构，试验结果表明历史知识与目标知识相关性很高，所以转移知识能表现出比随机获取更好的性能
+效果：基于NAO的改进在cifar10上错误率1.99%，搜索时间加速了33倍
+到6GPU天
+
+
+2019/7/25
+1.	参数数量：
+ 
+2.	Mobilenet
+https://blog.csdn.net/u013082989/article/details/77970196
+https://blog.csdn.net/mzpmzk/article/details/82976871
+可分离卷积层：Kw*Kh*Cin+Cin*Cout 深度可分离卷积，分成空间卷积和点卷积，空间卷积学习图片分布信息，但不改变输出通道数，点卷积将输入通道结合起来产生输出通道
+3.	RNN：处理序列数据。LSTM和ResNet。梯度弥散和梯度爆炸。Inception多分支？联合？投票，融合，集成学习
+4.	又换论文啦orz：MorphNet：Fast & Simple Resource-Constrained Structure Learning of Deep Networks er
+5.	MorphNet论文解读：通过稀疏性正则化项识别出效率低的神经元。能不能在已经验证的成功的大型网络基础上自动化设计轻量级网络架构。神经网络架构自动“瘦身”，目标函数为FLOP和Param。Weighted sparsifying regularization（加权稀疏正则化）
+6.	http://ilearning.huawei.com/edx/courses/HuaweiX+CNE052301001461/about
+大家抽空  看一下CCE认证，对于团队了解D芯片非常有效
+
+2019/7/26
+1.	批归一化Batch Normalization对抗梯度消失，原归一化方法只在输入处归一化，批归一化对中间层的输出（激活函数前）也作归一化。
+2.	MorphNet [mɔːrf]。自动设计更小的神经网络。约束FLOPs，latency，Params。决策变量inL，outL，kernel size，channel，connection。关键问题：在缩小网络输出宽度的同时保证精度可以接受。有约束的优化问题：网络规模小于一定，最小化Loss。
+3.	宽度系数ω，给损失函数增加输出宽度参数相关的正则化项。均匀分布+L1 norm。converged收敛。正则化系数，正则化规则。多目标优化问题，。r是如何与宽度系数建立联系的。MorphNet的结果并没有改变网络的结构，其实是权重稀疏化。正则化系数lambda很好找，主要就是设计正则化项，带有梯度信息，连续化。针对批归一化的用gamma，有residual的用group LASSO
+4.	云上运行深度神经网络模型
+5.	NetAdapt论文解读：http://tongtianta.site/paper/4586
+
+
+
+

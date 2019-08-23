@@ -1,0 +1,137 @@
+题目描述：
+给输入一个正整数数组，将它们连接起来排成一个数，输出能排出的所有数字中最小的一个。
+
+样例输入1：
+{2, 1}
+样例输出1：
+12
+
+样例输入2：
+{32, 321}
+样例输出2：
+32132
+
+样例输入3：
+{4589, 101,41425,9999}
+样例输出3：
+1014142545899999；
+
+接口说明：
+int  smallestDigit(int a[],int nCount,char * strRst)
+功能：将输入的数组排成最小的数
+输入： int a[]:整型数组
+int nCount:数组长度
+char * strRst 返回值
+输出：无
+返回：成功返回0  异常返回-1
+
+
+
+•	bool StringCompare(char *pcStrA, char *pcStrB) { if ((0 == pcStrA) || (0 == pcStrB)) { return false; } unsigned int ulLenOfStrA = strlen(pcStrA); unsigned int ulLenOfStrB = strlen(pcStrB); unsigned int ulMinLength = MIN(ulLenOfStrA, ulLenOfStrB); return StringCompareCore(pcStrA, pcStrB, ulMinLength); }
+
+#include <stdlib.h>
+#include <string.h>
+#include "oj.h"
+#include<string>
+#include <vector>
+#include<sstream>
+#include<algorithm>
+#include<iostream>
+
+bool cmp(const std::string &i, const std::string &j){
+	if (i.size() == j.size()){
+		return i < j;
+	}
+	else if (i.size()>j.size()){
+		std::string tmp = i.substr(0, j.size());
+		std::string tmpOther = i.substr(j.size(), i.size() - j.size());
+		if (tmp == j){
+			return cmp(tmpOther, j);
+		}
+		else{
+			return cmp(tmp, j);
+		}
+	}
+	else {
+		return !cmp(j, i);
+	}
+}
+
+
+int  smallestDigit(int a[],int nCount,char * strRst)
+{	
+	if (a == NULL || strRst == NULL){
+		return -1;
+	}
+	std::vector<std::string> nInput;
+	for (int i = 0; i < nCount; i++){
+		std::ostringstream s;
+		s << a[i];
+		nInput.push_back(s.str());
+	}
+	sort(nInput.begin(), nInput.end(), cmp);
+	
+	for (std::vector<std::string>::size_type ix = 1; ix < nInput.size(); ix++){
+		nInput[0] += nInput[ix];
+	}
+	strcpy(strRst, nInput[0].c_str());
+	return 0;
+}
+
+
+
+
+
+01	#include <stdlib.h>
+02	#include <string.h>
+03	#include "oj.h"
+04	#include<string>
+05	#include <vector>
+06	#include<sstream>
+07	#include<algorithm>
+08	#include<iostream>
+09	 
+10	bool cmp(const std::string &i, const std::string &j){
+11	    if (i.size() == j.size()){
+12	        return i < j;
+13	    }
+14	    else if (i.size()>j.size()){
+15	        std::string tmp = i.substr(0, j.size());
+16	        std::string tmpOther = i.substr(j.size(), i.size() - j.size());
+17	        if (tmp == j){
+18	            return cmp(tmpOther, j);
+19	        }
+20	        else{
+21	            return cmp(tmp, j);
+22	        }
+23	    }
+24	    else {
+25	        return !cmp(j, i);
+26	    }
+27	}
+28	 
+29	 
+30	int  smallestDigit(int a[],int nCount,char * strRst)
+31	{  
+32	    if (a == NULL || strRst == NULL){
+33	        return -1;
+34	    }
+35	    std::vector<std::string> nInput;
+36	    for (int i = 0; i < nCount; i++){
+37	        std::ostringstream s;
+38	        s << a[i];
+39	        nInput.push_back(s.str());
+40	    }
+41	    sort(nInput.begin(), nInput.end(), cmp);
+42	     
+43	    for (std::vector<std::string>::size_type ix = 1; ix < nInput.size(); ix++){
+44	        nInput[0] += nInput[ix];
+45	    }
+46	    strcpy(strRst, nInput[0].c_str());
+47	    return 0;
+48	}
+
+
+
+初来砸到，最开始认为这个坑很深，尤其是跟帖的几个例子，12，121排成12112把我搞晕了，还想用递归来解决。但是后来静下心来仔细想了一下，冒泡就能解决这个问题了。核心算法：冒泡加字符串比较比较简单
+如果（（A排在B后面形成的数）> （A排在B前面形成的数））做（A/B交换）

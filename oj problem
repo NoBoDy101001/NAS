@@ -135,3 +135,56 @@ int  smallestDigit(int a[],int nCount,char * strRst)
 
 初来砸到，最开始认为这个坑很深，尤其是跟帖的几个例子，12，121排成12112把我搞晕了，还想用递归来解决。但是后来静下心来仔细想了一下，冒泡就能解决这个问题了。核心算法：冒泡加字符串比较比较简单
 如果（（A排在B后面形成的数）> （A排在B前面形成的数））做（A/B交换）
+
+
+#include<iostream>
+#include<stdio.h>
+#include <stdlib.h>
+#include <string>
+#include <algorithm>
+#include <vector>
+#include "oj.h"
+using namespace std;
+
+// 功能：将输入的数组排成最小的数
+// 输入： int a[]:整型数组
+//         int nCount:数组长度
+//         char * strRst 返回值
+// 输出：
+// 返回：成功返回0  异常返回-1
+
+const int MaxNumberLen=100;
+
+bool CMP(string str1,string str2)
+{
+    string temp1=str1.append(str2);
+	string temp2=str2.append(str1);
+
+	return temp1<temp2;
+}
+
+int  smallestDigit(int a[],int nCount,char *strRst)
+{
+	if( (NULL==a)||(nCount<=0)||(NULL==strRst) )
+		return -1;
+
+	char** strNumbers=(char**)(new int[nCount]);
+
+	for(int i = 0; i < nCount; i++) //将数字转换为字符串   
+	{     
+		strNumbers[i]=new char[MaxNumberLen+1];
+		sprintf(strNumbers[i],"%d",a[i]);
+	}  
+
+   sort(strNumbers, strNumbers + nCount, CMP); //字符串数组排序   
+   
+   for(int i=0;i<nCount;i++)
+	   strcat(strRst,strNumbers[i]);
+   
+   for(int i=0;i<nCount;i++)
+	   delete[] strNumbers[i];
+   delete[] strNumbers;
+
+   return 0;
+}
+

@@ -1,0 +1,168 @@
+目录
+
+HUAWEI TECHNOLOGIES CO., LTD.
+Huawei Confidential
+3
+项目背景
+l项目名称：NAS模型优化
+l项目背景：
+	Ø模型越来越复杂设计验证周期长
+	Ø模型设计严重依赖专家经验
+	Ø应用场景多样
+	Ø不同的部署设备、不同的约束指标
+	Ø人工设计的网络难以满足需求
+
+HUAWEI TECHNOLOGIES CO., LTD.
+Huawei Confidential
+4
+学习的内容和成果
+l学习了AutoML和NAS的相关知识
+l学习了Moxing框架的结构和使用
+l实现了基于MorphNet对NAS搜索出的网络模型优化方案
+l调研分析了自动模型压缩方法和自动数据增强方法
+l调研了TensorFlow的演进过程
+
+HUAWEI TECHNOLOGIES CO., LTD.
+Huawei Confidential
+5
+主要工作内容
+l研究背景
+	p网络在针对特定任务时需要满足一定的资源约束
+	p从头搜索一个网络结构耗费的计算和时间成本很高
+数据
+自动数据标注
+自动化预处理 策略搜索
+自动模型搜索
+自动超参调优
+自动模型压缩
+自动剪枝
+自动量化
+……
+模型
+lMorphNet的研究及应用
+
+HUAWEI TECHNOLOGIES CO., LTD.
+Huawei Confidential
+6
+lMorphNet概述
+	p一种深度网络稀疏性正则化结构剪枝方法（training过程中学习） ，主要原则是正则项loss连续松弛化，通过梯度方法学习，正则项 loss迫使weights或gamma稀疏化，当其足够小时，对应的channel 被剪掉。
+	p算法流程：(1)正则化剪枝；(2)均匀膨胀到期望大小；(3)retrain 得到优化后的模型
+MorphNet方案的完成情况
+
+HUAWEI TECHNOLOGIES CO., LTD.
+Huawei Confidential
+7
+l研究目标
+	Ø在精度不损失或损失很少的情况下，减小模型的大小
+l研究路线
+	Ø对MorphNet的参数进行研究
+	Ø在single-path方案搜索出来的网络上应用
+	Ø验证MorphNet的效果
+MorphNet方案的完成情况
+
+HUAWEI TECHNOLOGIES CO., LTD.
+Huawei Confidential
+8
+MorphNet方案的完成情况
+l正则化强度系数
+	Ø正则化强度系数会决定模型压缩程度
+
+	阈值	epochs	Top1Acc	Flops/ M
+	1e-2	40	0.603	536.7
+	1e-3	40	0.611	544.0
+	1e-4	40	0.620	551.4
+HUAWEI TECHNOLOGIES CO., LTD.
+Huawei Confidential
+9
+l剪枝阈值
+	ØGamma threshold对regular loss曲线基本没有影响，对精度和模 型裁剪大小有一定影响
+MorphNet方案的完成情况
+
+HUAWEI TECHNOLOGIES CO., LTD.
+Huawei Confidential
+10
+l剪枝阈值
+	Ø观察gamma的分布可以大致确定gamma threshold的量级在1e-2
+MorphNet方案的完成情况
+
+HUAWEI TECHNOLOGIES CO., LTD.
+Huawei Confidential
+11
+l学习率
+	p学习率不仅会影响结构学习的快慢，对于剪枝的结果影响也很大
+MorphNet方案的完成情况
+
+	计算消耗	Baseline	MorphNet	增益
+	100%	0.759	0.754	-0.65%
+	75%	0.722	0.727	+0.69%
+HUAWEI TECHNOLOGIES CO., LTD.
+Huawei Confidential
+12
+MorphNet方案的完成情况
+lRetrain和Fine-tune方案
+	pRetrain方案：
+	pFine-tune方案：计算消耗减小到baseline的96.7%，精度损失0.2%
+l方案调整
+	p针对retrain模型精度损失较多和fine-tune方案模型难以缩小的问 题，进行方案调整，给剪枝训练过程增加一个不带正则项的warm up阶段，方案调整后的结果：剪枝后90%模型，精度0.758，精度损 失0.1%。
+
+HUAWEI TECHNOLOGIES CO., LTD.
+Huawei Confidential
+13
+MorphNet方案的改进计划
+l学习率：采用gamma剪枝方法时，可以给gamma和weights设置不 同的学习率，使得模型在前期侧重学习模型精度，后期侧重于学 习模型结构缩减。
+l阈值学习：因为各层的阈值并不一定一致，可以把阈值作为学习 参数加入到search过程中
+
+HUAWEI TECHNOLOGIES CO., LTD.
+Huawei Confidential
+14
+自动数据增强方法的研究
+l调研了几种自动数据增强方法
+	pAutoAugment：设计一个数据增强策略的搜索空间，使用强化学习 寻找最佳的图像变换策略。优点：可以学习到高性能的数据增强方 法；缺点：计算花费巨大，在cifar10数据集上需要5000个GPU时。
+	pPBA算法：可以在训练的过程中调整增强策略的超参数，避免了重 复训练，根据训练过程生成一个策略调度而不是固定的策略。相比 较AutoAugment方法，在精度相当的情况下，减小了三个数量级的 训练花费。
+
+HUAWEI TECHNOLOGIES CO., LTD.
+Huawei Confidential
+15
+自动数据增强方法的研究
+l针对PBA算法，进行了进一步的研究
+	p对PBA算法中的核心搜索算法PBT进行进一步研究，并在组内分享
+	p在cifar10数据集上复现论文代码，Wide-ResNet-28-10在cifar10 上应用PBA数据增强策略精度97.4%。
+	p尝试将PBA算法应用于ImageNet数据集的增强策略学习中
+	p对PBA算法的代码进行研究，并协助定位在Moxing框架下运行的问 题
+
+HUAWEI TECHNOLOGIES CO., LTD.
+Huawei Confidential
+16
+lShiftNet：伯克利大学提出通过利用“移位”操作替代空间卷 积，极大减小了参数量和运算量；韩国科学技术院和海康威视 对其进行了改进，增加了移位方向和提高了效率。
+lDeformable convolution：微软提出了一种可变形卷积核，卷 积核可以根据感兴趣的区域学习偏移。
+lDilated convolution：空洞卷积在进行卷积操作时引入了另一 个参数扩张率，卷积核在相同计算成本的情况下可以具有更大 的感受野。
+调研卷积核变形方法
+
+HUAWEI TECHNOLOGIES CO., LTD.
+Huawei Confidential
+17
+l输出调研文档两篇
+调研TensorFlow演进过程
+
+HUAWEI TECHNOLOGIES CO., LTD.
+Huawei Confidential
+18
+个人总结和计划
+l岗位适应情况：
+	p学习新知识速度较快，进入工作状态较快
+l不足：
+	p计算机视觉方面经验不足，影响了方案的实现和调试的速度
+	p在工作之余的活跃度不足
+l改进计划：
+	p保持对最新技术的跟踪
+	p增强沟通交流能力
+
+HUAWEI TECHNOLOGIES CO., LTD.
+Huawei Confidential
+19
+l职业发展期望：
+	p对人工智能方向比较感兴趣，个人性格与研究性工作较契合，倾向 于从事AI方面的算法研究和创新工作。
+l努力方向：
+	p夯实经典机器学习理论基础的同时，保持对最新技术的跟踪
+	p增加个人代码量
+	p重视技术的实现细节，多动手实现并总结

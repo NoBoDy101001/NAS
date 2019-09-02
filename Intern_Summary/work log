@@ -1,0 +1,339 @@
+NetAdapt：https://github.com/madoibito80/NetAdapthttps://github.com/madoibito80/NetAdapt
+chainer框架实现
+
+MorphNet：https://github.com/google-research/morph-net
+
+7-29
+	1. 激活函数：swish；relu6——>hard sigmoid
+	2. 加SE：squeeze and excitation
+	3. fine-tune
+	4. MorphNet github地址：https://github.com/google-research/morph-net
+	5. NetAdapt github地址：https://github.com/madoibito80/NetAdapt
+
+https://github.com/NatGr/Master_Thesis/tree/master/NetAdapt
+
+7-30
+	• softmax：前向过程输出哪个类别选择max的那一位编码，但max离散无法用在反向的求导过程中，所以有了softmax，
+	• 为什么regular_loss增加或者nan
+	• tf的交叉熵
+	
+	tf.nn.softmax_cross_entropy_with_logits()  
+	tf.nn.sparse_softmax_cross_entropy_with_logits()   
+	tf.nn.sigmoid_cross_entropy_with_logits()   
+	tf.nn.weighted_cross_entropy_with_logits()
+
+8-1
+稀疏性正则化
+可移植性：重训练可行
+删除是发生在什么时候？
+正则化
+原因：特征过多，造成模型过拟合
+L0，L1，L2
+在L约束下（图中圆形）L2 norm，平方形式，求出J0（原始损失函数）的最小值。
+全连接层的神经元权重正则化到了卷积神经网络中又是另一个概念了
+思考：
+1.理解论文思想和在项目中起作用之间存在gap。从读论文到work的转化过程
+2.自主解决问题和向团队寻求帮助之间的平衡
+3.面向bug编程到面向需求编程
+
+8-2
+
+一、论文内容
+
+1.目标：在一定资源受限约束下优化一个神经网络。针对特定目标对模型进行压缩
+
+针对特定目的对现有网络结构进行改进
+通过改变output width（filter的数目）来控制整个网络的大小，针对特定的目标：Flops，Params(model size)，latency等等。
+
+2.算法基本步骤
+
+			
+资源约束转变为正则化项加入到损失函数中
+Step1. 结构化学习，建议使用固定学习参数
+				
+
+
+Step2.optional：uniform expansion通道数的均匀膨胀，膨胀系数
+
+
+Step3.retrain不带regular_loss（finetune）
+					
+
+3.计算loss
+计算约束资源成本，例如FLOPs和model size，都与layer filter nums相关
+
+C在训练中是保持不变的，filter的数量变化影响loss
+
+4.设计正则化项loss
+
+gamma正则化：对bn层的gamma
+
+
+
+Group lasso：对权重
+
+设计正则化项是关键
+
+是否连接是离散的
+
+同时想要得到一个稀疏化的输出表示
+
+理想的表达：可以得到输出的稀疏化表示；被约束变量是连续的，可以在BP过程中求导，从而科学系；可以控制output filters的数量
+
+MorphNet选择了bn层的gamma作为正则化对象
+
+Gamma是BN层的一个尺度学习参数
+
+通过gamma可以控制通道是否连接，当gamma是0输出时，连接删除，gamma非零输出时，连接是alive的
+
+gamma通常不会到0，因此需要一个threshold
+
+
+尽管当gamma zero out时，regular loss出现断点，但不影响loss的整体可导性
+
+简单来讲，就是原loss再加上一个gamma的L1 norm
+
+现在，可以通过gamma控制通道数，网络的每一层通过关于通道的简单函数得到了关于FLOPs等的cost，网络结构的优化任务建立。？膨胀部分的具体实现
+
+5.针对其他资源目标的正则化
+如latency_regularizer
+
+二、代码部分
+
+结构学习的起点可以是pretrain的模型，也可以是没有训练的模型，权重和被约束参数都会在训练中学习
+	1. 确定正则化类型和约束目标：
+	2. 确定超参数
+
+	• Regularization strength
+	• Alive threshold
+	
+	通常是容易设置的
+	正则化强度设置在1/(initial cost)的量级左右。
+
+
+	3. 将正则化项加入到原loss中
+	4. 结构学习训练
+	5. 输出学到的模型结构，StructureExporter
+	6. Retrain 
+	7. Uniformly expand
+
+MorphNet通过输入输出的tensor的算子捕捉层间
+关系，计算cost和进行剪枝。
+
+GammaFlopsRegularizer.get_cost()可以用来计算网络的估计cost
+
+测例：resnet在mnist上测试MorphNet的效果 10epochs
+
+Gamma vs group lasso
+Gamma: 90s/epoch with BN
+Group lasso: 100s/epoch without BN
+
+Initial flops: 1981966300
+
+	λ regular strength	Test_acc	flops	Runtime/s
+No reg	——	0.9935	1981966300	774.1431
+Gamma 	1e-7	0.9809	130192750	818.5240
+Gamma	1e-8	0.9843	786961300	800.7151
+Gamma 	1e-9	0.9929	1981966300	817.7397
+Group lasso	1e-8	0.9912	1978355200	859.4297
+
+Model loss收敛了，但reg loss还没有收敛
+retrain没有做
+
+Alive_0
+
+Alive_4200
+
+{
+  "conv2_face_1a_1x1_increase/Conv2D": 256,
+  "conv2_face_1a_1x1_reduce/Conv2D": 64,
+  "conv2_face_1a_1x1_shortcut/Conv2D": 256,
+  "conv2_face_1a_3x3/Conv2D": 64,
+  "conv2_face_1b_1x1_increase/Conv2D": 256,
+  "conv2_face_1b_1x1_reduce/Conv2D": 64,
+  "conv2_face_1b_3x3/Conv2D": 64,
+  "conv2_face_1c_1x1_increase/Conv2D": 256,
+  "conv2_face_1c_1x1_reduce/Conv2D": 64,
+  "conv2_face_1c_3x3/Conv2D": 64,
+  "conv3_face_2a_1x1_increase/Conv2D": 512,
+  "conv3_face_2a_1x1_reduce/Conv2D": 128,
+  "conv3_face_2a_1x1_shortcut/Conv2D": 512,
+  "conv3_face_2a_3x3/Conv2D": 128,
+  "conv3_face_2b_1x1_increase/Conv2D": 512,
+  "conv3_face_2b_1x1_reduce/Conv2D": 128,
+  "conv3_face_2b_3x3/Conv2D": 128,
+  "conv3_face_2c_1x1_increase/Conv2D": 512,
+  "conv3_face_2c_1x1_reduce/Conv2D": 128,
+  "conv3_face_2c_3x3/Conv2D": 128,
+  "conv3_face_2d_1x1_increase/Conv2D": 512,
+  "conv3_face_2d_1x1_reduce/Conv2D": 128,
+  "conv3_face_2d_3x3/Conv2D": 128,
+  "conv4_face_3a_1x1_increase/Conv2D": 1024,
+  "conv4_face_3a_1x1_reduce/Conv2D": 256,
+  "conv4_face_3a_1x1_shortcut/Conv2D": 1024,
+  "conv4_face_3a_3x3/Conv2D": 256,
+  "conv4_face_3b_1x1_increase/Conv2D": 1024,
+  "conv4_face_3b_1x1_reduce/Conv2D": 256,
+  "conv4_face_3b_3x3/Conv2D": 256,
+  "conv4_face_3c_1x1_increase/Conv2D": 1024,
+  "conv4_face_3c_1x1_reduce/Conv2D": 256,
+  "conv4_face_3c_3x3/Conv2D": 256,
+  "conv4_face_3d_1x1_increase/Conv2D": 1024,
+  "conv4_face_3d_1x1_reduce/Conv2D": 256,
+  "conv4_face_3d_3x3/Conv2D": 256,
+  "conv4_face_3e_1x1_increase/Conv2D": 1024,
+  "conv4_face_3e_1x1_reduce/Conv2D": 256,
+  "conv4_face_3e_3x3/Conv2D": 256,
+  "conv4_face_3f_1x1_increase/Conv2D": 1024,
+  "conv4_face_3f_1x1_reduce/Conv2D": 256,
+  "conv4_face_3f_3x3/Conv2D": 256,
+  "conv5_face_4a_1x1_increase/Conv2D": 2048,
+  "conv5_face_4a_1x1_reduce/Conv2D": 512,
+  "conv5_face_4a_1x1_shortcut/Conv2D": 2048,
+  "conv5_face_4a_3x3/Conv2D": 512,
+  "conv5_face_4b_1x1_increase/Conv2D": 2048,
+  "conv5_face_4b_1x1_reduce/Conv2D": 512,
+  "conv5_face_4b_3x3/Conv2D": 512,
+  "conv5_face_4c_1x1_increase/Conv2D": 2048,
+  "conv5_face_4c_1x1_reduce/Conv2D": 512,
+  "conv5_face_4c_3x3/Conv2D": 512,
+  "face_conv1_1/3x3_s1/Conv2D": 64
+}
+
+{
+  "conv2_face_1a_1x1_increase/Conv2D": 256,
+  "conv2_face_1a_1x1_reduce/Conv2D": 0,
+  "conv2_face_1a_1x1_shortcut/Conv2D": 256,
+  "conv2_face_1a_3x3/Conv2D": 3,
+  "conv2_face_1b_1x1_increase/Conv2D": 256,
+  "conv2_face_1b_1x1_reduce/Conv2D": 0,
+  "conv2_face_1b_3x3/Conv2D": 2,
+  "conv2_face_1c_1x1_increase/Conv2D": 256,
+  "conv2_face_1c_1x1_reduce/Conv2D": 0,
+  "conv2_face_1c_3x3/Conv2D": 3,
+  "conv3_face_2a_1x1_increase/Conv2D": 512,
+  "conv3_face_2a_1x1_reduce/Conv2D": 21,
+  "conv3_face_2a_1x1_shortcut/Conv2D": 512,
+  "conv3_face_2a_3x3/Conv2D": 32,
+  "conv3_face_2b_1x1_increase/Conv2D": 512,
+  "conv3_face_2b_1x1_reduce/Conv2D": 15,
+  "conv3_face_2b_3x3/Conv2D": 55,
+  "conv3_face_2c_1x1_increase/Conv2D": 512,
+  "conv3_face_2c_1x1_reduce/Conv2D": 16,
+  "conv3_face_2c_3x3/Conv2D": 29,
+  "conv3_face_2d_1x1_increase/Conv2D": 512,
+  "conv3_face_2d_1x1_reduce/Conv2D": 23,
+  "conv3_face_2d_3x3/Conv2D": 42,
+  "conv4_face_3a_1x1_increase/Conv2D": 1024,
+  "conv4_face_3a_1x1_reduce/Conv2D": 141,
+  "conv4_face_3a_1x1_shortcut/Conv2D": 1024,
+  "conv4_face_3a_3x3/Conv2D": 142,
+  "conv4_face_3b_1x1_increase/Conv2D": 1024,
+  "conv4_face_3b_1x1_reduce/Conv2D": 103,
+  "conv4_face_3b_3x3/Conv2D": 166,
+  "conv4_face_3c_1x1_increase/Conv2D": 1024,
+  "conv4_face_3c_1x1_reduce/Conv2D": 91,
+  "conv4_face_3c_3x3/Conv2D": 134,
+  "conv4_face_3d_1x1_increase/Conv2D": 1024,
+  "conv4_face_3d_1x1_reduce/Conv2D": 89,
+  "conv4_face_3d_3x3/Conv2D": 110,
+  "conv4_face_3e_1x1_increase/Conv2D": 1024,
+  "conv4_face_3e_1x1_reduce/Conv2D": 10,
+  "conv4_face_3e_3x3/Conv2D": 62,
+  "conv4_face_3f_1x1_increase/Conv2D": 1024,
+  "conv4_face_3f_1x1_reduce/Conv2D": 0,
+  "conv4_face_3f_3x3/Conv2D": 34,
+  "conv5_face_4a_1x1_increase/Conv2D": 2048,
+  "conv5_face_4a_1x1_reduce/Conv2D": 512,
+  "conv5_face_4a_1x1_shortcut/Conv2D": 2048,
+  "conv5_face_4a_3x3/Conv2D": 512,
+  "conv5_face_4b_1x1_increase/Conv2D": 2048,
+  "conv5_face_4b_1x1_reduce/Conv2D": 512,
+  "conv5_face_4b_3x3/Conv2D": 512,
+  "conv5_face_4c_1x1_increase/Conv2D": 2048,
+  "conv5_face_4c_1x1_reduce/Conv2D": 512,
+  "conv5_face_4c_3x3/Conv2D": 512,
+  "face_conv1_1/3x3_s1/Conv2D": 28
+}
+
+flop_regularizer.GammaFlopsRegularizer
+
+framework中提供了各种op_handler类处理source operations
+	OpHandler:父类接口，判断op type是否属于regularization（batch norm op）
+		Is_source_op:判断是否是一个regularizer source
+		Is_passthrough:判断是否。例如：OpX->conv->bn(source op),bn是source op所以group with conv to queue,   
+			conv试图group with conv但测试conv的is_passthrough为false,因此，opx不会group
+		assign_grouping：广义的passthrough ops会group with输入和输出，处理完op的group方式后，根据group
+			结果更新OpRegularizerManager，最后决定下一个进入队列的neighbor op
+		Create_regularizer:对source op建立正则化项
+	OutputNonPassthroughOpHandler：输出接正则化项，输入不接正则化项
+	GroupingOpHandler：default OpHandler,对于没有特别约定的对象设定为grouping op。目的是
+	BatchNormSourceOpHandler
+		Assign_grouping:先切片，	
+	Op_regularizer_manager.OpRegularizerManager：管理op
+		_dfs_for_source_ops：从logits.op跟踪到input.op
+
+计算regular_loss
+Resource_function:
+	Flop_function:
+
+8-5
+python导入模块总结：
+	1. 导入package，package内部import相对路径问题：将上一层设为source directory
+	2. sys.path存放了python的路径地址，可以增加需要的绝对路径 PYTHONPATH
+	3. 不同目录下的调用最好用绝对路径
+
+8-31
+满足一定资源约束的深度神经网络模型优化方法（模型压缩剪枝）
+Morphnet:
+一种深度网络稀疏性正则化结构剪枝方法（training过程中学习），主要原则是正则项loss连续松弛化，通过GD方法学习，正则项loss迫使weights或gamma稀疏化，当其足够小时，对应的channel被剪掉。
+	1. 算法流程：(1)正则化剪枝；(2)均匀膨胀到期望大小；(3)retrain得到优化后的模型
+
+
+Netadapt:
+一种预训练模型渐进式剪枝方法，通过经验方法快速估计资源消耗，逐步调整网络结构，直到满足设定资源约束要求。
+	1. 算法流程：(1)给定一个K层(conv and FC)网络net0；(2)在每一步迭代中，在满足R-deltaR的约束的条件下生成剪枝网络集合并进行short-term fine-tune；(3)从剪枝网络集合中选取精度最高的网络；(4)满足资源约束budget时跳出迭代并long-term fine-tune
+	2. 算法细节：
+	(1)选择channel数量：根据empirical measurement选择满足约束的最大数量；选择哪些channel留下：选择l2norm最大的N个filters。
+	(2)快速资源消耗估计方法：layer-wise look-up tables。提前测算资源消耗，实施算法时查表估计。
+
+
+9-1
+BN层
+原因：梯度爆炸和梯度消失，中间层激活函数前的输入分布偏离，导致激活函数对于输入的变化不敏感，梯度作用消失。层数增加，学习速度变慢
+把每层神经网络任意神经元这个输入值的分布强行拉回到均值为0方差为1的标准正态分布
+
+linux命令不要随便打空格
+
+环境配置
+anaconda环境管理
+jupyter notebook学习笔记
+pycharm作为IDE
+tensorflow学习：
+	数据处理
+	模型搭建
+	Tensor op session
+
+
+
+tensorboard使用小结
+
+
+linux基本使用
+文件操作
+
+ssh连接服务器
+
+数据处理，data loader一般组件
+
+下载（如果需要），本地读取
+格式，image(n, img_w, img_h, channel)，label
+划分train、eval和test集
+确定标签编码方式
+归一化
+Shuffle
+Next batch
+
+
+
+

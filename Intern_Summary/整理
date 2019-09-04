@@ -1,0 +1,23 @@
+一、CNN
+1.LeNet5 卷积，平均池化
+2.2012 AlexNet：Relu，dropout，重叠最大池
+3.2015 VGG 3*3卷积核，多个小卷积替代大卷积核
+4.2014 Inception： bottleneck，多尺寸卷积核多分支concat，变宽了
+5.2015 ResNet：残差连接skip
+6.Xception depthwise separable
+7.MobileNet 深度可分离卷积depthwise；V2 倒bottleneck，残差连接，se连接；V3 SE，hard swish，last stage MnasNet->+SE->-+h-swish->+Netadapt->
++compatible layers
+
+二、NAS
+cell block 连接 连续化
+搜索空间：cell堆叠，算子：conv，pooling类型等；kernel size；residual connection；channels；depth；
+搜索策略：随机贪婪；强化学习；进化算法；贝叶斯；梯度
+技巧：参数共享，代理精度，超网one-shot，single-path
+NASNet基于强化学习，RNN作为controller或策略
+ENAS权重共享efficient
+PNAS
+SNAS商汤随机可微分
+MNAS
+ProxylessNAS二值化？
+DARTS可微分，连接权重
+

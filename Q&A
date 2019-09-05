@@ -1110,6 +1110,80 @@ tanghaonan 50002090		2019-08-15 10:14:45
 renxin 50002726		2019-08-15 10:14:56
 不就一个网站吗
 
+gujiaming 50003972		2019-07-04 09:53:11
+填ip 跟用户名
+gujiaming 50003972		2019-07-04 09:56:40
+export http_proxy="http://工号:密码@proxy.huawei.com:8080"
+export https_proxy="http://工号:密码@proxy.huawei.com:8080"
+
+gujiaming 50003972		2019-07-04 09:57:19
+在你的根目录下建立一个./bashrc 有的话就不用建立了
+gujiaming 50003972		2019-07-04 09:57:31
+在里面输入上面的几行
+gujiaming 50003972		2019-07-04 09:57:47
+改成你自己的工号密码
+gujiaming 50003972		2019-07-04 10:02:26
+可以吗
+zhaosida 50006753		2019-07-04 10:30:28
+这个是什么原因呢
+gujiaming 50003972		2019-07-04 10:30:56
+pip install xx --user
+gujiaming 50003972		2019-07-04 10:31:01
+这样装
+zhaosida 50006753		2019-07-04 10:31:16
+好的
+zhaosida 50006753		2019-07-04 10:32:25
+咱们是统一用python2.7吗
+gujiaming 50003972		2019-07-04 10:33:02
+不是的 看别人论文用的什么 复现就用啥
+zhaosida 50006753		2019-07-04 10:33:50
+好的，这个终端机怎么配置pycharm或anaconda呢
+gujiaming 50003972		2019-07-04 10:36:16
+ok
+gujiaming 50003972		2019-07-04 10:37:03
+scp -r /home/nishome/xmye/software/pycharm-community-2018.3.1.tar.gz ./
+gujiaming 50003972		2019-07-04 10:37:03
+解压后，cd pycharm-community-2018.3.1/bin
+gujiaming 50003972		2019-07-04 10:37:03
+sh pycharm.sh &
+gujiaming 50003972		2019-07-04 10:37:03
+scp -r /home/nishome/xmye/Anaconda3-5.2.0-Linux-x86_64.sh ./
+gujiaming 50003972		2019-07-04 10:37:03
+https://blog.csdn.net/love666666shen/article/details/75675185
+
+1、安装anaconda
+下载：
+https://mirrors.tuna.tsinghua.edu.cn/anaconda/archive/
+安装：
+bash Anaconda3-5.2.0-Linux-x86_64.sh
+
+2、建立conda环境，进入conda/bin
+./conda create -n tensorflow python=3.5 或者./conda create -n tensorflow
+这里的tensorflow只是一个符号而已，python=3.5对应的tf
+ 
+3、激活环境
+source activate tensorflow
+另外不激活的命令是：source deactivate 
+这样的话，下面安装的tf都在名为tensorflow的虚拟环境中进行的
+
+4、安装TF
+./pip install tensorflow==1.10 -i https://pypi.tuna.tsinghua.edu.cn/simple 或者
+./pip install tensorflow
+./pip install tensorflow-gpu==1.10 -i https://pypi.tuna.tsinghua.edu.cn/simple或者
+./pip install tensorflow-gpu
+
+zhaosida 50006753		2019-07-04 11:03:29
+解压是哪个命令
+gujiaming 50003972		2019-07-04 11:05:09
+tar -zxvf **.tar.gz
+gujiaming 50003972		2019-07-04 11:14:12
+export JAVA_OPTS=-Djava.awt.headless=true
+gujiaming 50003972		2019-07-04 11:14:46
+vi ~/.bashrc 然后按一下i  把这个复制进去
+gujiaming 50003972		2019-07-04 11:15:13
+再esc 输入：wq退出
+gujiaming 50003972		2019-07-04 11:15:34
+然后source ~/.bashrc
 
 
 
